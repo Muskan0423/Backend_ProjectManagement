@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    status: { type: String, default: 'pending' } 
+    status: { type: String, enum: ['pending', 'fulfilled'], default: 'pending' },
 });
 
 const userSchema = new mongoose.Schema({
