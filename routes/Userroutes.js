@@ -95,7 +95,15 @@ router.get('/users',  async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
+router.get('/users/me', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 router.delete('/task/:taskId', protect, async (req, res) => {
     const { taskId } = req.params;
 
