@@ -1,47 +1,49 @@
 const connectToMongo = require('./db');
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const port = 5001;
 const dotenv = require('dotenv');
-const User = require('./models/Usermodel'); 
-
-const Admin = require('./models/Adminmodel'); 
-const jwt = require('jsonwebtoken');
+const userRoutes = require('./routes/Userroutes');
+const adminRoutes = require('./routes/AdminRoutes');
 
 dotenv.config();
 
+const app = express();
+const port = 5000;
+
 connectToMongo();
-app.use(cors({
-  origin: '*', 
-  credentials: true 
-}));
+app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+    res.send('Hello World!');
 });
 
+// Protect middleware
 const protect = (req, res, next) => {
-  const token = req.header('Authorization');
-  if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+    const token = req.header('Authorization');
+    if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
 
-  try {
-    const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET); 
-    req.user = decoded.user;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
-  }
+    try {
+        const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET);
+        req.user = decoded.user;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: 'Token is not valid' });
+    }
 };
 
-app.use('/api/users', require('./routes/Userroutes')); 
-app.use('/api/admin', require('./routes/AdminRoutes')); 
-
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/protected', protect, (req, res) => {
-  res.json({ message: 'This is a protected route!', user: req.user });
+    res.json({ message: 'This is a protected route!', user: req.user });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+// Start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(port, () => {
+        console.log(`Server is running at http://localhost:${port}`);
+    });
+}
+
+module.exports = app; // Ensure this is at the end

@@ -19,25 +19,6 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-router.put('/task/:taskId', async (req, res) => {
-    const { taskId } = req.params;
-    const { name } = req.body;
-
-    try {
-        const userWithTask = await User.findOne({ 'tasks._id': taskId });
-
-        if (!userWithTask) return res.status(404).json({ message: 'Task not found' });
-
-        const task = userWithTask.tasks.id(taskId);
-        task.name = name;
-
-        await userWithTask.save();
-        res.json({ message: 'Task updated' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -56,45 +37,46 @@ router.post('/login', async (req, res) => {
 });
 
 router.post('/task', async (req, res) => {
-  const { userId, name } = req.body;
-  const token = req.headers.authorization?.split(" ")[1]; // Assumes "Bearer <token>"
+    const { userId, name } = req.body;
+    const token = req.headers.authorization?.split(" ")[1]; 
 
-  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+    if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
 
-  try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const adminId = decoded.id; // Extract admin ID from token
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const adminId = decoded.id; 
 
-      const admin = await Admin.findById(adminId);
-      if (!admin) return res.status(403).json({ message: 'Access denied. Not an admin.' });
+        const admin = await Admin.findById(adminId);
+        if (!admin) return res.status(403).json({ message: 'Access denied. Not an admin.' });
 
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
-      const newTask = {
-          name,
-          status: 'pending',
-      };
+        const newTask = {
+            name,
+            status: 'pending',
+        };
 
-      user.tasks.push(newTask);
-      await user.save();
+        user.tasks.push(newTask);
+        await user.save();
 
-      res.status(201).json({
-          message: 'Task added successfully',
-          task: {
-              id: newTask._id, 
-              name: newTask.name,
-              status: newTask.status,
-              assignedTo: {
-                  id: user._id,
-                  username: user.username,
-              },
-          },
-      });
-  } catch (error) {
-      res.status(500).json({ message: error.message });
-  }
+        res.status(201).json({
+            message: 'Task added successfully',
+            task: {
+                id: newTask._id,
+                name: newTask.name,
+                status: newTask.status,
+                assignedTo: {
+                    id: user._id,
+                    username: user.username,
+                },
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
+
 router.delete('/users/:id', async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1]; 
     const userIdToDelete = req.params.id;
@@ -118,6 +100,7 @@ router.delete('/users/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 router.get('/tasks/:userId', async (req, res) => {
     const token = req.headers.authorization?.split(" ")[1]; 
     const { userId } = req.params;
@@ -126,7 +109,7 @@ router.get('/tasks/:userId', async (req, res) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const adminId = decoded.id; // Extract admin ID from token
+        const adminId = decoded.id;
 
         const admin = await Admin.findById(adminId);
         if (!admin) return res.status(403).json({ message: 'Access denied. Not an admin.' });
@@ -150,29 +133,15 @@ router.get('/tasks', async (req, res) => {
         const allTasks = users.flatMap(user => user.tasks);
         const pending = allTasks.filter(task => task.status === 'pending');
         const fulfilled = allTasks.filter(task => task.status === 'completed');
-        const pendingTasks = pending.length;
-        const fulfilledTasks = fulfilled.length;
 
-        const totalUsers = users.length;
-
-        res.json({ pending, fulfilled, pendingTasks, fulfilledTasks, totalTasks: allTasks.length, totalUsers });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-router.get('/tasks/task', async (req, res) => {
-    try {
-        const users = await User.find().populate('tasks');
-
-        const allTasks = users.flatMap(user => user.tasks);
-        const pending = allTasks.filter(task => task.status === 'pending');
-        const fulfilled = allTasks.filter(task => task.status === 'completed');
-        const pendingTasks = pending.length;
-        const fulfilledTasks = fulfilled.length;
-
-        const totalUsers = users.length;
-
-        res.json({ pending, fulfilled, pendingTasks, fulfilledTasks, totalTasks: allTasks.length, totalUsers });
+        res.json({
+            pending,
+            fulfilled,
+            pendingTasks: pending.length,
+            fulfilledTasks: fulfilled.length,
+            totalTasks: allTasks.length,
+            totalUsers: users.length,
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
