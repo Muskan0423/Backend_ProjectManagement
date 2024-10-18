@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/Usermodel');
+const SupportTicket=require('../models/Supportmodel')
 const router = express.Router();
 
 const protect = (req, res, next) => {
@@ -118,6 +119,29 @@ router.delete('/task/:taskId', protect, async (req, res) => {
         res.json({ message: 'Task deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+router.post('/tickets', protect, async (req, res) => {
+    try {
+        const ticket = new SupportTicket({
+            user: req.user.id, // Use req.user.id directly, since it's already verified
+            subject: req.body.subject,
+            message: req.body.message
+        });
+        await ticket.save();
+        res.status(201).json(ticket);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+
+router.get('/tickets/user/:userId', async (req, res) => {
+    try {
+        const tickets = await SupportTicket.find({ user: req.params.userId });
+        res.json(tickets);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 });
 

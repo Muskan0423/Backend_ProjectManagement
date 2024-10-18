@@ -13,7 +13,7 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes); 
 
 beforeAll(async () => {
-    const url = 'mongodb+srv://muskankewlanicimet:Vgj0O4kXtR5y84wn@cluster0.ebuz8.mongodb.net/testing'; // Use your actual connection string
+    const url = 'mongodb+srv://muskankewlanicimet:Vgj0O4kXtR5y84wn@cluster0.ebuz8.mongodb.net/testing'; 
     await mongoose.connect(url);
 });
 
@@ -35,29 +35,24 @@ describe('Admin Management API', () => {
         const password = 'Muskan@23';
         const hashedPassword = await bcrypt.hash(password, 10);
     
-        // Ensure admin exists
         await Admin.findOneAndUpdate(
             { username: 'Harsh' },
             { password: hashedPassword },
             { upsert: true }
         );
 
-        // Create a test user with a unique username
         testUser = await User.create({ username: `testUser_${Date.now()}`, password: hashedPassword });
         token = await generateAdminToken();
     });
 
     afterEach(async () => {
-        // Clean up the created admin
         await Admin.deleteMany({ username: 'Harsh' });
-        // Cleanup the test user
         if (testUser) {
             await User.findByIdAndDelete(testUser._id);
         }
     });
 
     afterAll(async () => {
-       
         await User.deleteMany({ username: /testUser_/ }); 
     });
 
@@ -73,7 +68,7 @@ describe('Admin Management API', () => {
     test('POST /login - should login an admin', async () => {
         const res = await request(app)
             .post('/api/admin/login')
-            .send({ username: 'Harsh', password: 'Muskan@23' });
+            .send({ username: 'newAdmin', password: 'password123' });
     
         expect(res.statusCode).toBe(200);
         expect(res.body.token).toBeDefined();

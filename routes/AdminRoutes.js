@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Adminmodel');
 const User = require('../models/Usermodel');
+const SupportTicket=require('../models/Supportmodel')
 
 const router = express.Router();
 
@@ -19,6 +20,20 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+router.put('/task/:taskId', async (req, res) => {
+    const { taskId } = req.params;
+    const { name } = req.body;
+    try {
+        const userWithTask = await User.findOne({ 'tasks._id': taskId });
+        if (!userWithTask) return res.status(404).json({ message: 'Task not found' });
+        const task = userWithTask.tasks.id(taskId);
+        task.name = name;
+        await userWithTask.save();
+        res.json({ message: 'Task updated' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -144,6 +159,35 @@ router.get('/tasks', async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/tickets',  async (req, res) => {
+    try {
+        const tickets = await SupportTicket.find().populate('user').populate('admin');
+        res.json(tickets);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+
+router.put('/tickets/:ticketId',  async (req, res) => {
+    try {
+        const ticket = await SupportTicket.findById(req.params.ticketId);
+        if (!ticket) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        ticket.status = req.body.status;
+        ticket.admin = req.user._id; 
+        ticket.message = req.body.message; 
+        ticket.updatedAt = Date.now();
+
+        await ticket.save();
+        res.json(ticket);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 });
 

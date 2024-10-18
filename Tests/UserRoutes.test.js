@@ -11,14 +11,12 @@ let createdUser;
 beforeAll(async () => {
     await mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-    // Create a new user for testing
     createdUser = await User.create({
         username: 'testuser',
         email: 'test@example.com',
         password: 'password123'
     });
 
-    // Log in to get the token
     const res = await request(app).post('/api/users/login').send({
         email: 'test@example.com',
         password: 'password123'
@@ -27,7 +25,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    // Clean up the specific user after all tests have run
     if (createdUser) {
         await User.deleteOne({ _id: createdUser._id });
     }
@@ -45,7 +42,6 @@ describe('User Routes', () => {
         expect(res.statusCode).toEqual(201);
         expect(res.body.message).toBe('User created successfully');
 
-        // Store the created user for later cleanup
         createdUser = await User.findOne({ email: 'new@example.com' });
     });
 
@@ -58,24 +54,22 @@ describe('User Routes', () => {
         expect(res.statusCode).toEqual(200);
         expect(res.body).toHaveProperty('token');
 
-        // Ensure the token is set
         token = res.body.token;
-        console.log('Token:', token); // Log the token
+        console.log('Token:', token); 
     });
 });
 
 
 describe('Task Routes', () => {
     beforeEach(async () => {
-        // Clear tasks for the user before each test
         const user = await User.findById(createdUser._id);
-        user.tasks = []; // Clear the tasks
+        user.tasks = []; 
         await user.save();
     });
 
     it('should create a new task', async () => {
         const res = await request(app)
-            .post('/api/users/task')  // Ensure the correct endpoint
+            .post('/api/users/task')  
             .set('Authorization', `Bearer ${token}`)
             .send({ name: 'New Task' });
 
@@ -85,16 +79,16 @@ describe('Task Routes', () => {
 
     it('should retrieve all tasks', async () => {
         await request(app)
-            .post('/api/users/task')  // Ensure the correct endpoint
+            .post('/api/users/task') 
             .set('Authorization', `Bearer ${token}`)
             .send({ name: 'New Task' });
 
         const res = await request(app)
-            .get('/api/users/tasks')  // Ensure the correct endpoint
+            .get('/api/users/tasks') 
             .set('Authorization', `Bearer ${token}`);
 
         expect(res.statusCode).toEqual(200);
-        expect(res.body.tasks.length).toBe(1); // This should now be correct
+        expect(res.body.tasks.length).toBe(1); 
     });
 });
 
