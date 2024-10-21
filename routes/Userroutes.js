@@ -6,16 +6,20 @@ const SupportTicket=require('../models/Supportmodel')
 const router = express.Router();
 
 const protect = (req, res, next) => {
-    const token = req.header('Authorization');
-    if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
+    const token = req.headers.authorization?.split(' ')[1];
+    console.log('Authorization header:', req.headers.authorization);
 
-    try {
-        const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET);
-        req.user = decoded.user;
-        next();
-    } catch (error) {
-        res.status(401).json({ message: 'Token is not valid' });
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
     }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: 'Token is not valid' });
+        }
+        req.user = decoded.user; 
+        next();
+    });
 };
 
 
@@ -121,22 +125,47 @@ router.delete('/task/:taskId', protect, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-router.post('/tickets', protect, async (req, res) => {
+router.post('/tickets', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]; 
+
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
     try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+        const userId = decoded.user.id; 
+
         const ticket = new SupportTicket({
-            user: req.user.id, // Use req.user.id directly, since it's already verified
+            user: userId, 
             subject: req.body.subject,
             message: req.body.message
         });
+        
         await ticket.save();
         res.status(201).json(ticket);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 });
+router.get('/tickets/user/me', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1]; 
 
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
 
-router.get('/tickets/user/:userId', async (req, res) => {
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+        const userId = decoded.user.id; 
+
+        const tickets = await SupportTicket.find({ user: userId }); 
+        res.json(tickets);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+router.get('/tickets/user/:userId', protect, async (req, res) => {
     try {
         const tickets = await SupportTicket.find({ user: req.params.userId });
         res.json(tickets);

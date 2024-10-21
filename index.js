@@ -18,7 +18,6 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-// Protect middleware
 const protect = (req, res, next) => {
     const token = req.header('Authorization');
     if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
@@ -32,18 +31,16 @@ const protect = (req, res, next) => {
     }
 };
 
-// Routes
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/protected', protect, (req, res) => {
     res.json({ message: 'This is a protected route!', user: req.user });
 });
 
-// Start server if not in test mode
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
         console.log(`Server is running at http://localhost:${port}`);
     });
 }
 
-module.exports = app; // Ensure this is at the end
+module.exports = app; 

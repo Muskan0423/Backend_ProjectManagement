@@ -162,7 +162,7 @@ router.get('/tasks', async (req, res) => {
     }
 });
 
-router.get('/tickets',  async (req, res) => {
+router.get('/tickets', async (req, res) => {
     try {
         const tickets = await SupportTicket.find().populate('user').populate('admin');
         res.json(tickets);
@@ -171,17 +171,16 @@ router.get('/tickets',  async (req, res) => {
     }
 });
 
-
-router.put('/tickets/:ticketId',  async (req, res) => {
+router.put('/tickets/:ticketId', async (req, res) => {
     try {
         const ticket = await SupportTicket.findById(req.params.ticketId);
         if (!ticket) {
             return res.status(404).json({ error: 'Ticket not found' });
         }
 
-        ticket.status = req.body.status;
-        ticket.admin = req.user._id; 
-        ticket.message = req.body.message; 
+        ticket.status = req.body.status; 
+        ticket.admin = req.body.adminId; 
+        ticket.responseMessage = req.body.message; 
         ticket.updatedAt = Date.now();
 
         await ticket.save();
@@ -190,5 +189,6 @@ router.put('/tickets/:ticketId',  async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 });
+
 
 module.exports = router;
