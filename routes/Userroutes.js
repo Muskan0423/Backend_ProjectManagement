@@ -142,6 +142,7 @@ router.post('/tickets', async (req, res) => {
             message: req.body.message
         });
         
+        
         await ticket.save();
         res.status(201).json(ticket);
     } catch (error) {
@@ -160,6 +161,7 @@ router.get('/tickets/user/me', async (req, res) => {
         const userId = decoded.user.id; 
 
         const tickets = await SupportTicket.find({ user: userId }); 
+        
         res.json(tickets);
     } catch (error) {
         res.status(400).json({ error: error.message });

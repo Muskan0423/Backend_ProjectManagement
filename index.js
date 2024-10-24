@@ -17,7 +17,6 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
-
 const protect = (req, res, next) => {
     const token = req.header('Authorization');
     if (!token) return res.status(401).json({ message: 'No token, authorization denied' });

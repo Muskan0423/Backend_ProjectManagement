@@ -19,21 +19,20 @@ router.post('/signup', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// router.post('/signup', async (req, res) => {
+//     const { username, password } = req.body;
 
-router.put('/task/:taskId', async (req, res) => {
-    const { taskId } = req.params;
-    const { name } = req.body;
-    try {
-        const userWithTask = await User.findOne({ 'tasks._id': taskId });
-        if (!userWithTask) return res.status(404).json({ message: 'Task not found' });
-        const task = userWithTask.tasks.id(taskId);
-        task.name = name;
-        await userWithTask.save();
-        res.json({ message: 'Task updated' });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+//     try {
+//         const hashedPassword = await bcrypt.hash(password, 10);
+//         const db=getDb()
+//          await db.admins.insertOne({ username, password: hashedPassword });
+//         res.status(201).json({ message: 'Admin created successfully' });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -87,6 +86,20 @@ router.post('/task', async (req, res) => {
                 },
             },
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+router.put('/task/:taskId', async (req, res) => {
+    const { taskId } = req.params;
+    const { name } = req.body;
+    try {
+        const userWithTask = await User.findOne({ 'tasks._id': taskId });
+        if (!userWithTask) return res.status(404).json({ message: 'Task not found' });
+        const task = userWithTask.tasks.id(taskId);
+        task.name = name;
+        await userWithTask.save();
+        res.json({ message: 'Task updated' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -165,6 +178,7 @@ router.get('/tasks', async (req, res) => {
 router.get('/tickets', async (req, res) => {
     try {
         const tickets = await SupportTicket.find().populate('user').populate('admin');
+        
         res.json(tickets);
     } catch (error) {
         res.status(400).json({ error: error.message });
